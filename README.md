@@ -1,18 +1,18 @@
 # Reinforcement Learning
 
-## Nên xem theo thứ tự này
+## Suggested viewing order
 
-### 2D: mê cung lưới
-| # | Là gì | File |
-|---|-------|------|
-| 1 | 💻 Code Q-learning cho mê cung (Python) | [`2D/maze-input/2DGrid.py`](2D/maze-input/2DGrid.py) |
-| 2 | 🎮 Trò chơi HTML — vẽ mê cung của bạn (tải về, mở bằng trình duyệt) | [`2D/maze-input/maze_editor.html`](2D/maze-input/maze_editor.html) |
-| 3 | 🎬 Video giải thích | [`2D/q-grid/q-grid.mp4`](2D/q-grid/q-grid.mp4) |
+### 2D: grid maze
+| # | What | File |
+|---|------|------|
+| 1 | 💻 Q-learning code for the maze (Python) | [`2D/maze-input/2DGrid.py`](2D/maze-input/2DGrid.py) |
+| 2 | 🎮 HTML game: draw your own maze (download and open in a browser) | [`2D/maze-input/maze_editor.html`](2D/maze-input/maze_editor.html) |
+| 3 | 🎬 Explainer video | [`2D/q-grid/q-grid.mp4`](2D/q-grid/q-grid.mp4) |
 
-## Cấu trúc thư mục
+## Folder structure
 ```
 2D/
-  maze-input/            code + trò chơi HTML + maze.txt
-  q-grid/                video 2D (mã nguồn video + 2DGrid.py bản dùng để dựng phim)
+  maze-input/            code + HTML game + maze.txt
+  q-grid/                2D video (video source + the 2DGrid.py used to render it)
 ```
-Các phần mới sẽ được thêm vào repo này.
+More projects will be added to this repo.
