@@ -1,7 +1,4 @@
-# Reinforcement Learning — giải mê cung bằng Q-learning
-
-Dự án đầu tay: một con AI học tự tìm đường đến đích chỉ từ reward (Q-learning).
-Đi từ dễ đến khó — **hành lang 1 chiều (1D)** rồi **mê cung 2D**. Mỗi phần có đủ 3 thứ: **code → video → trò chơi HTML**.
+# Reinforcement Learning
 
 ## Nên xem theo thứ tự này
 
