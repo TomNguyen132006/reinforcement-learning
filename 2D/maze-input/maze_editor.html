@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mê cung của Chuột Q</title>
+<style>
+  /* ===== Màu và cỡ chữ: phong cách nhãn dán dễ thương, nền kem ấm ===== */
+  :root {
+    --cream: #fff4dc; --card: #fffdf6; --ink: #4a2c1a; --muted: #6b4a35;
+    --line: #d9b98a; --edge: #8a5a2b; --accent: #ff8a3d;
+    --cs: 36px;          /* kích thước 1 ô, JS tự co theo vùng chứa */
+    --glide: 120ms;      /* thời gian chuột trượt giữa 2 ô */
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; padding: 16px; color: var(--ink); background-color: var(--cream);
+    background-image: radial-gradient(#ffe7b3 2px, transparent 2px); background-size: 28px 28px;
+    /* stack hệ thống: không cần tải font, vẫn đúng dấu tiếng Việt khi offline */
+    font-family: ui-rounded, "SF Pro Rounded", Nunito, Quicksand, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
+                 "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+    line-height: 1.4;
+  }
+  :focus-visible { outline: 3px solid #2457d6; outline-offset: 2px; }
+  header { text-align: center; margin: 0 auto 14px; }
+  h1 { margin: 0; font-size: clamp(24px, 4.5vw, 34px); }
+  .hint { margin: 4px 0 0; color: var(--muted); }
+
+  .layout { display: grid; grid-template-columns: 290px minmax(0, 1fr) 380px; gap: 16px; align-items: start; max-width: 1500px; margin: 0 auto; }
+  @media (max-width: 1150px) { .layout { grid-template-columns: 290px minmax(0, 1fr); } .qpane { grid-column: 1 / -1; } }
+  @media (max-width: 720px)  { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  .card { background: var(--card); border: 3px solid var(--line); border-radius: 20px; padding: 14px;
+          box-shadow: 0 4px 0 #e8cfa4, 0 10px 16px #8a5a2b22; min-width: 0; }
+  h2 { margin: 16px 0 8px; font-size: 16px; }
+  h2:first-child { margin-top: 0; }
+
+  /* ===== Nút to, bo tròn, nhấn xuống ===== */
+  button {
+    display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 8px 14px; cursor: pointer;
+    font: inherit; font-weight: 800; color: var(--ink); background: #fff;
+    border: 3px solid var(--edge); border-radius: 999px; box-shadow: 0 4px 0 var(--edge);
+    transition: transform .06s, box-shadow .06s;
+  }
+  button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  #run { min-height: 58px; font-size: 19px; background: var(--accent); }
+  #more { background: #ffd84d; }
+  .qhead button { width: auto; margin: 0; min-height: 44px; }
+
+  input[type=text] { width: 64px; min-height: 40px; padding: 4px 8px; font: inherit; color: inherit; background: #fff;
+                     border: 2px solid var(--line); border-radius: 10px; }
+  label { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }
+  .sizes { display: flex; gap: 10px; }
+  .sizes label { flex: 1; }
+  input[type=range] { width: 100%; min-height: 32px; accent-color: var(--accent); }
+  .scale { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; font-weight: 800; min-height: 32px; }
+
+  /* ===== Palette giống ô vật phẩm trong game ===== */
+  .palette { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 66px; padding: 6px 4px;
+          font-size: 14px; font-weight: 800; background: #fff; border: 3px solid var(--line); border-radius: 14px;
+          cursor: grab; user-select: none; }
+  .item .ico { font-size: 26px; line-height: 1; }
+  .item.active { border-color: #ffb300; background: #fff3c4; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #ffb300; }
+
+  #error { margin-top: 8px; min-height: 1em; color: #b3261e; font-weight: 700; }
+  #status { margin-top: 10px; font-weight: 700; }
+  .bar { height: 22px; margin-top: 6px; background: #fff; border: 3px solid var(--edge); border-radius: 999px; overflow: hidden; position: relative; }
+  .fill { height: 100%; width: 0; background: linear-gradient(90deg, #7ddc6e, #ffd84d); transition: width .2s; }
+  .bar span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; }
+  #summary { margin-top: 10px; padding: 10px 12px; white-space: pre-line; border: 3px solid var(--line); border-radius: 16px; background: #fff; }
+  #summary:empty { display: none; }
+  #summary.good { background: #e4f9dc; border-color: #5cb85c; }
+  #summary.warn { background: #fff0d6; border-color: #e0a030; }
+
+  /* ===== Lưới ===== */
+  #fit { display: flex; justify-content: center; overflow: auto; }
+  #empty { margin: 30px 0; text-align: center; color: var(--muted); font-weight: 700; }
+  #board { position: relative; flex: none; }
+  #grid { display: grid; gap: 2px; padding: 6px; background: #c79a62; border: 4px solid var(--edge); border-radius: 16px;
+          touch-action: none; user-select: none; }
+  .cell { position: relative; width: var(--cs); height: var(--cs); display: flex; align-items: center; justify-content: center;
+          font-size: calc(var(--cs) * .55); font-weight: 800; line-height: 1; color: var(--ink);
+          background: #fffaf0; border-radius: 6px; -webkit-user-drag: none; }
+  .cell.wall { background-color: #7a4a2b; background-image: linear-gradient(#5e3820 2px, transparent 2px), linear-gradient(90deg, #5e3820 2px, transparent 2px); background-size: 100% 50%, 50% 100%; }
+  .cell.trap { background-color: #ff6a3d; background-image: repeating-linear-gradient(45deg, #ffffff44 0 4px, transparent 4px 8px); }
+  .cell.start { background: #8fe08f; }
+  .cell.goal { background: #ffd84d; }
+  .cell.trail { box-shadow: inset 0 0 0 40px #ff8fb455; }                                   /* vệt chuột vừa đi qua */
+  .cell.greedy { box-shadow: inset 0 0 0 40px #c9a8ffaa, inset 0 0 0 3px #7b49c9; }        /* đường tốt nhất */
+  .cell.reveal { animation: pop .35s backwards; }
+  .badge { position: absolute; top: 0; right: 1px; padding: 0 3px; font-size: 11px; line-height: 14px; color: #3b1a5a; background: #fffd; border-radius: 4px; }
+  #grid.tiny .cell { font-size: 0; }                /* ô quá nhỏ: ẩn biểu tượng, chỉ giữ màu và họa tiết */
+  #grid.tiny .badge { display: none; }
+
+  #agent { position: absolute; left: 0; top: 0; width: var(--cs); height: var(--cs); display: flex; align-items: center; justify-content: center;
+           font-size: calc(var(--cs) * .75); pointer-events: none; z-index: 2; }
+  body.anim #agent { transition: transform var(--glide) ease-out; }   /* chuột trượt; tắt ở tốc độ Nhanh */
+  #agentIco { display: block; line-height: 1; }
+  #agentIco.ev-bump { animation: shake .25s; }
+  #agentIco.ev-trap { animation: zap .45s; }
+  #agentIco.ev-goal { animation: hop .6s; }
+  #grid.tiny ~ #agent #agentIco { font-size: 0; width: 60%; height: 60%; background: #ff5c8a; border: 2px solid #fff; border-radius: 50%; }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  @keyframes zap { 0%, 100% { filter: none; } 30% { filter: drop-shadow(0 0 6px #ff1a1a) saturate(3); transform: scale(1.2) rotate(-8deg); } }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-60%) scale(1.15); } 60% { transform: translateY(0); } 80% { transform: translateY(-20%); } }
+  @keyframes pop { from { transform: scale(.3); opacity: 0; } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .legend span { white-space: nowrap; }
+
+  /* ===== Bảng điểm ===== */
+  .qhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .qhead h2 { margin: 0; }
+  .qpane p { margin: 8px 0; font-size: 14px; color: var(--muted); }
+  .qscroll { contain: content; max-height: 70vh; overflow: auto; border: 2px solid var(--line); border-radius: 12px; }
+  table { table-layout: fixed; border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th { position: sticky; top: 0; z-index: 1; background: #ffe3a8; }
+  th, td { padding: 4px 6px; text-align: center; border-bottom: 1px solid #f0dcb8; }
+  tbody tr:nth-child(even) { background: #fff6e2; }
+  tr.cur td { outline: 3px solid #2457d6; outline-offset: -3px; }
+  td.flash { animation: flash 0.4s; }
+  @keyframes flash { from { box-shadow: inset 0 0 0 20px #ffd84d; } to { box-shadow: inset 0 0 0 20px #ffd84d00; } }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Mê cung của Chuột Q 🐭🧀</h1>
+  <p class="hint">Vẽ tường và bẫy (luôn chừa ít nhất một đường từ 🏠 tới 🧀), rồi bấm “Bắt đầu học” để xem Chuột Q tự tìm đường.</p>
+</header>
+
+<div class="layout">
+  <div class="left card">
+    <h2>Cỡ mê cung (2–20)</h2>
+    <div class="sizes">
+      <label>Hàng <input type="text" id="rows" value="5" inputmode="numeric"></label>
+      <label>Cột <input type="text" id="cols" value="5" inputmode="numeric"></label>
+    </div>
+    <button id="create">Tạo lưới</button>
+
+    <h2>Vẽ mê cung</h2>
+    <div class="palette" role="group" aria-label="Chọn cọ vẽ (có thể kéo thả vào lưới)">
+      <div class="item active" draggable="true" data-type="#" role="button" tabindex="0" aria-pressed="true"><span class="ico" aria-hidden="true">🧱</span><span>Tường</span></div>
+      <div class="item" draggable="true" data-type="T" role="button" tabindex="0" aria-pressed="false"><span class="ico" aria-hidden="true">🪤</span><span>Bẫy</span></div>
+      <div class="item" draggable="true" data-type="." role="button" tabindex="0" aria-pressed="false"><span class="ico" aria-hidden="true">🧽</span><span>Xóa</span></div>
+    </div>
+    <button id="download">Tải maze.txt</button>
+
+    <h2>Cho Chuột Q học</h2>
+    <label for="speed">Tốc độ</label>
+    <input type="range" id="speed" min="0" max="100" value="60">
+    <div class="scale" aria-hidden="true"><span>Chậm</span><span>Vừa</span><span>Nhanh</span></div>
+    <button id="run">Bắt đầu học</button>
+    <button id="reset">Làm lại</button>
+    <button id="best">Xem đường tốt nhất</button>
+    <div id="error" role="alert"></div>
+    <div id="status"></div>
+    <div class="bar" id="bar" role="progressbar" aria-label="Tiến độ học" aria-valuemin="0" aria-valuenow="0" aria-valuemax="1">
+      <div class="fill" id="fill"></div><span id="barText"></span>
+    </div>
+    <div id="summary" aria-live="polite"></div>
+    <button id="more" hidden>Luyện thêm</button>
+    <div id="live" aria-live="polite" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"></div>
+
+    <details>
+      <summary>Nâng cao</summary>
+      <label title="Mỗi lần học, agent sửa điểm cũ nhiều hay ít. Số lớn = sửa mạnh tay.">Tốc độ học (alpha) <input type="text" id="alpha" value="0.5"></label>
+      <label title="Agent coi trọng phần thưởng ở các bước sau bao nhiêu. Gần 1 = nhìn xa.">Coi trọng tương lai (gamma) <input type="text" id="gamma" value="0.9"></label>
+      <label title="Xác suất agent bỏ qua kinh nghiệm và đi thử một hướng ngẫu nhiên.">Độ tò mò: tỉ lệ đi thử ngẫu nhiên (epsilon) <input type="text" id="epsilon" value="0.7"></label>
+      <label title="Số lần agent đi từ start tới khi tới đích (hoặc hết giới hạn bước).">Số lượt học (episode) <input type="text" id="episodes" value="50"></label>
+      <button id="stepBtn">Bước (1 bước)</button>
+    </details>
+  </div>
+
+  <div class="mid card">
+    <p id="empty">Bấm “Tạo lưới” để bắt đầu vẽ mê cung nhé!</p>
+    <div id="fit">
+      <div id="board">
+        <div id="grid" hidden role="group" aria-label="Mê cung"></div>
+        <div id="agent" hidden><span id="agentIco" aria-hidden="true">🐭</span></div>
+      </div>
+    </div>
+    <div class="legend" aria-label="Chú thích">
+      <span>🏠 Xuất phát</span><span>🧀 Phô mai (đích)</span><span>🧱 Tường</span><span>🪤 Bẫy (−10 điểm)</span>
+      <span>🐭 Chuột Q</span><span>🟣 Đường tốt nhất (số = bước)</span><span>← → ↑ ↓ hướng chuột thấy tốt nhất</span>
+    </div>
+  </div>
+
+  <div class="qpane card">
+    <div class="qhead"><h2>Bảng điểm của từng ô</h2><button id="toggleQ">Ẩn bảng</button></div>
+    <div id="qbox">
+      <p>Mỗi số là điểm agent chấm cho hướng đi đó từ ô ấy, càng cao càng tốt.</p>
+      <div class="qscroll">
+        <table>
+          <thead><tr><th>Ô</th><th>←</th><th>→</th><th>↑</th><th>↓</th><th>Tốt nhất</th></tr></thead>
+          <tbody id="qbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ==== LOGIC (không đụng tới giao diện, khớp 2DGrid.py) ====
+    const DIRS = [[0, -1], [0, 1], [-1, 0], [1, 0]];   // 0=trái, 1=phải, 2=lên, 3=xuống
+    const ARROWS = ['←', '→', '↑', '↓'];
+
+    function makeQ(rows, cols) {   // mỗi ô một mảng 4 giá trị riêng
+      return Array.from({ length: rows }, () => Array.from({ length: cols }, () => [0, 0, 0, 0]));
+    }
+
+    const autoEpisodes = () => 50;   // số lượt học mặc định: cố định 50
+
+    // Môi trường: tính ô mới, kẹp biên, đâm tường thì đứng yên; reward tính theo vị trí sau khi đi
+    function envStep(grid, pos, action) {
+      const rows = grid.length, cols = grid[0].length;
+      const r = Math.min(rows - 1, Math.max(0, pos[0] + DIRS[action][0]));
+      const c = Math.min(cols - 1, Math.max(0, pos[1] + DIRS[action][1]));
+      const next = grid[r][c] === '#' ? pos : [r, c];
+      const done = next[0] === rows - 1 && next[1] === cols - 1;
+      const reward = done ? 10 : (grid[next[0]][next[1]] === 'T' ? -10 : -1);
+      return { pos: next, reward, done };
+    }
+
+    // Action tốt nhất; hòa thì lấy action đầu tiên (giống .index(max) của Python)
+    function bestAction(q) { return q.indexOf(Math.max(...q)); }
+    function allEqual(q) { return q.every(v => v === q[0]); }   // chưa học thì argmax vô nghĩa
+
+    function chooseAction(q, epsilon) {
+      if (Math.random() < epsilon) return Math.floor(Math.random() * 4);
+      return bestAction(q);
+    }
+
+    function updateQ(Q, s, a, reward, next, done, alpha, gamma) {
+      const target = done ? reward : reward + gamma * Math.max(...Q[next[0]][next[1]]);
+      Q[s[0]][s[1]][a] += alpha * (target - Q[s[0]][s[1]][a]);
+    }
+
+    // Đường greedy: không ngẫu nhiên, không cập nhật Q. Dừng khi tới goal, lặp lại ô cũ, hoặc quá giới hạn bước
+    function runGreedy(grid, Q) {
+      const maxSteps = grid.length * grid[0].length * 4;
+      let pos = [0, 0], score = 0, steps = 0;
+      const seen = new Set(['0,0']), path = [pos];
+      while (steps < maxSteps) {
+        const res = envStep(grid, pos, chooseAction(Q[pos[0]][pos[1]], 0));
+        steps++; score += res.reward;
+        if (seen.has(res.pos.join())) return { path, steps, score, reached: false };   // đi vòng
+        seen.add(res.pos.join());
+        path.push(res.pos);
+        pos = res.pos;
+        if (res.done) return { path, steps, score, reached: true };
+      }
+      return { path, steps, score, reached: false };
+    }
+
+    // BFS: có đường từ S tới G không (bẫy đi xuyên qua được, chỉ tường chặn)
+    function hasPath(grid, blocked = '#') {   // blocked: các ô chặn đường (mặc định chỉ tường)
+      const rows = grid.length, cols = grid[0].length;
+      const seen = new Set(['0,0']), queue = [[0, 0]];
+      while (queue.length) {
+        const [r, c] = queue.shift();
+        if (r === rows - 1 && c === cols - 1) return true;
+        for (const [dr, dc] of DIRS) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !blocked.includes(grid[nr][nc]) && !seen.has(nr + ',' + nc)) {
+            seen.add(nr + ',' + nc);
+            queue.push([nr, nc]);
+          }
+        }
+      }
+      return false;
+    }
+
+    // Dijkstra tìm đường tối ưu thật: vào ô thường tốn 1, vào bẫy tốn 10; hòa thì ít bước hơn.
+    // Điểm = 10 - (tổng chi phí các ô không phải goal), khớp cách cộng reward của agent.
+    function optimalPath(grid) {
+      const rows = grid.length, cols = grid[0].length, INF = 1e9;
+      const dist = Array.from({ length: rows * cols }, () => [INF, INF]);
+      const done = new Array(rows * cols).fill(false);
+      const less = (a, b) => a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
+      dist[0] = [0, 0];
+      for (; ;) {
+        let u = -1;
+        for (let i = 0; i < dist.length; i++) if (!done[i] && dist[i][0] < INF && (u < 0 || less(dist[i], dist[u]))) u = i;
+        if (u < 0 || u === rows * cols - 1) break;
+        done[u] = true;
+        const r = Math.floor(u / cols), c = u % cols;
+        for (const [dr, dc] of DIRS) {
+          const nr = r + dr, nc = c + dc;
+          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols || grid[nr][nc] === '#') continue;
+          const isGoal = nr === rows - 1 && nc === cols - 1;
+          const nd = [dist[u][0] + (isGoal ? 0 : grid[nr][nc] === 'T' ? 10 : 1), dist[u][1] + 1];
+          if (less(nd, dist[nr * cols + nc])) dist[nr * cols + nc] = nd;
+        }
+      }
+      const g = dist[rows * cols - 1];
+      return g[0] >= INF ? null : { steps: g[1], score: 10 - g[0] };
+    }
+    // ==== HẾT LOGIC ====
+
+  const SYMBOL_CLASS = { '.': '', '#': 'wall', 'T': 'trap', 'S': 'start', 'G': 'goal' };
+  // Biểu tượng và tên chỉ là cách HIỂN THỊ; mảng grid vẫn lưu . # T S G
+  const ICONS = { '#': '🧱', 'T': '🪤', 'S': '🏠', 'G': '🧀' };
+  const NAMES = { '.': 'Ô trống', '#': 'Tường', 'T': 'Bẫy', 'S': 'Xuất phát', 'G': 'Đích (phô mai)' };
+  const OFFSET = 10, GAP = 2;   // viền 4px + đệm 6px của lưới, khoảng cách giữa ô: phải khớp CSS
+  const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = id => document.getElementById(id);
+  const gridEl = $('grid'), errorEl = $('error'), qbody = $('qbody');
+
+  // Hai loại dữ liệu tách riêng:
+  // (a) MÊ CUNG: chỉ `grid`; chỉ đổi trong makeGrid (Tạo lưới) và setCell (người dùng sửa).
+  // (b) TRẠNG THÁI HỌC: Q, agent, bộ đếm, đường hiển thị; chạy / xong / Làm lại chỉ đụng vào (b).
+  let grid = null;
+  let tool = '#', painting = false;
+  let Q = null, P = null;   // bảng Q và tham số (alpha, gamma, epsilon, episodes)
+  let running = false, finished = false, needReset = true, extra = 0;   // extra: số lượt học thêm khi "Luyện thêm"
+  let pos = null, episode = 0, stepCount = 0, maxSteps = 0;
+  let agentKey = null, lastUpd = null, qVisible = true;   // bảng Q hiện mặc định
+  let rafId = 0, strokeOpen = false;      // rafId: timer của vòng học; strokeOpen: nét vẽ hiện tại đã lưu undo chưa
+  const undoStack = [];                   // các bản chụp grid để Ctrl+Z (tối đa 50)
+  const DEBUG = location.search.includes('debug');   // mở file với ?debug để log mỗi lần ghi grid
+  let trail = new Set(), pathIdx = new Map(), dirty = new Set();
+  let cellEls = [], rowEls = {};
+  let csNow = 36, lastEvent = null, animatePath = false, lastPhase = '';   // chỉ để hiển thị
+  const pendingRows = new Set();   // hàng bảng Q chờ cập nhật (chia nhỏ qua nhiều khung khi học nhanh)
+
+  const key = (r, c) => r * grid[0].length + c;
+  const isEdge = (r, c) => (r === 0 && c === 0) || (r === grid.length - 1 && c === grid[0].length - 1);
+  const total = () => (P ? P.episodes : Number($('episodes').value)) + extra;
+
+  // ---------- Vẽ lưới và bảng ----------
+  function makeGrid(rows, cols) {
+    const g = [];
+    for (let r = 0; r < rows; r++) g.push(new Array(cols).fill('.')); // mỗi hàng là mảng riêng
+    g[0][0] = 'S';
+    g[rows - 1][cols - 1] = 'G';
+    return g;
+  }
+
+  // Cập nhật 1 ô lưới: mê cung từ mảng grid, rồi VẼ ĐÈ vệt, đường tốt nhất (agent là phần tử riêng)
+  function refreshCell(r, c) {
+    const k = key(r, c), sym = grid[r][c];
+    let cls = 'cell ' + SYMBOL_CLASS[sym];
+    if (trail.has(k)) cls += ' trail';
+    const el = cellEls[r][c];
+    el.style.animationDelay = '';
+    if (pathIdx.has(k)) {
+      cls += ' greedy';
+      if (animatePath) {   // hiện đường lần lượt từng ô theo thứ tự
+        cls += ' reveal';
+        el.style.animationDelay = pathIdx.get(k) * Math.min(80, 1600 / pathIdx.size) + 'ms';
+      }
+    }
+    const arrow = sym === '.' && !allEqual(Q[r][c]) ? ARROWS[bestAction(Q[r][c])] : '';
+    const text = sym !== '.' ? ICONS[sym] : arrow;
+    const title = NAMES[sym] + (pathIdx.get(k) > 0 ? `, bước ${pathIdx.get(k)}` : '');
+    const sig = cls + '|' + text + '|' + title + '|' + el.style.animationDelay;
+    if (el._sig === sig) return;   // không đổi thì khỏi đụng DOM (giữ trang mượt ở tốc độ Nhanh)
+    el._sig = sig;
+    el.className = cls;
+    el.textContent = text;
+    el.title = title;
+    el.setAttribute('aria-label', el.title + (arrow ? `, hướng tốt nhất ${arrow}` : ''));
+    if (pathIdx.get(k) > 0) {   // số thứ tự bước, đặt ở góc để vẫn thấy biểu tượng
+      const b = document.createElement('span');
+      b.className = 'badge';
+      b.textContent = pathIdx.get(k);
+      el.appendChild(b);
+    }
+  }
+
+  function refreshAll() { grid.forEach((row, r) => row.forEach((_, c) => refreshCell(r, c))); }
+
+  // Co kích thước ô theo vùng chứa để lưới 20x20 vẫn vừa màn hình
+  function fitGrid() {
+    if (!grid) return;
+    const rows = grid.length, cols = grid[0].length, w = $('fit').clientWidth;
+    let cs = 36;
+    if (w > 0) {
+      const byWidth = Math.floor((w - 2 * OFFSET - (cols - 1) * GAP) / cols);
+      // chiều cao: chừa chỗ cho tiêu đề phía trên và chú thích phía dưới để lưới vừa màn hình
+      const top = $('fit').getBoundingClientRect().top + window.scrollY;
+      const byHeight = Math.floor((window.innerHeight - Math.min(top, 160) - 120 - 2 * OFFSET - (rows - 1) * GAP) / rows);
+      cs = Math.max(8, Math.min(44, byWidth, Math.max(byHeight, 20)));   // không cho nhỏ hơn 20 chỉ vì chiều cao (màn hình thấp thì cuộn)
+    }
+    csNow = cs;
+    document.documentElement.style.setProperty('--cs', cs + 'px');
+    gridEl.classList.toggle('tiny', cs < 24);
+    positionAgent();
+  }
+  if (window.ResizeObserver) new ResizeObserver(fitGrid).observe($('fit'));
+  window.addEventListener('resize', fitGrid);
+
+  function positionAgent() {   // chuột là phần tử riêng, trượt bằng CSS transition
+    const a = $('agent');
+    if (agentKey === null || !grid) { a.hidden = true; return; }
+    const cols = grid[0].length, step = csNow + GAP;
+    a.hidden = false;
+    a.style.transform = `translate(${OFFSET + (agentKey % cols) * step}px, ${OFFSET + Math.floor(agentKey / cols) * step}px)`;
+  }
+
+  function renderGrid() {   // dựng lại khung lưới từ mảng grid (chỉ khi mê cung đổi)
+    gridEl.hidden = false;
+    $('empty').hidden = true;
+    gridEl.style.gridTemplateColumns = `repeat(${grid[0].length}, var(--cs))`;
+    gridEl.innerHTML = '';
+    cellEls = grid.map((row, r) => row.map((_, c) => {
+      const cell = document.createElement('div');
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.draggable = false;   // tắt kéo-thả gốc của trình duyệt trên ô
+      cell.setAttribute('role', 'img');
+      gridEl.appendChild(cell);
+      return cell;
+    }));
+    refreshAll();
+    fitGrid();
+  }
+
+  function qColor(v) {   // đỏ nhạt cho âm, xanh nhạt cho dương, đậm theo độ lớn
+    const a = Math.min(Math.abs(v) / 10, 1) * 0.6;
+    return v < 0 ? `rgba(231,76,60,${a})` : v > 0 ? `rgba(46,204,113,${a})` : '';
+  }
+
+  function refreshRow(r, c) {   // chỉ cập nhật đúng 1 hàng của bảng Q (bảng ẩn thì bỏ qua)
+    const row = rowEls[key(r, c)];
+    if (!qVisible || !row) return;
+    const vals = Q[r][c].map(v => v.toFixed(2)).join(' ');
+    if (row.vals !== vals) {   // chỉ ghi DOM khi số hiển thị đổi
+      row.vals = vals;
+      Q[r][c].forEach((v, a) => {
+        row.tds[a].textContent = v.toFixed(2);
+        row.tds[a].style.background = qColor(v);
+      });
+      row.tds[4].textContent = allEqual(Q[r][c]) ? '' : ARROWS[bestAction(Q[r][c])];
+    }
+    row.tr.classList.toggle('cur', key(r, c) === agentKey);
+  }
+
+  function buildTable() {   // dựng bảng một lần (khi hiện bảng / đổi mê cung / làm lại)
+    qbody.innerHTML = '';
+    rowEls = {};
+    if (!qVisible) return;
+    grid.forEach((row, r) => row.forEach((sym, c) => {
+      if (sym === '#') return;
+      const tr = document.createElement('tr');
+      const label = document.createElement('td');
+      label.textContent = `(${r},${c})`;
+      tr.appendChild(label);
+      const tds = [];
+      for (let i = 0; i < 5; i++) { const td = document.createElement('td'); tr.appendChild(td); tds.push(td); }
+      qbody.appendChild(tr);
+      rowEls[key(r, c)] = { tr, tds };
+      refreshRow(r, c);
+    }));
+  }
+
+  // ---------- Trạng thái học (b) ----------
+  function resetLearning(rebuild = true) {   // xóa Q, bộ đếm, đường hiển thị; KHÔNG đụng tới grid
+    stopLearning();
+    Q = makeQ(grid.length, grid[0].length);
+    maxSteps = grid.length * grid[0].length * 4;   // giới hạn bước mỗi episode
+    pos = null; agentKey = null; lastUpd = null; P = null; lastEvent = null;
+    episode = 0; stepCount = 0; extra = 0;
+    finished = false; needReset = true;
+    trail.clear(); pathIdx = new Map(); dirty.clear(); pendingRows.clear();
+    $('summary').textContent = '';
+    $('summary').className = '';
+    $('more').hidden = true;
+    errorEl.textContent = '';
+    if (rebuild) renderGrid(); else refreshAll();   // sửa 1 ô thì giữ nguyên các phần tử ô, chỉ vẽ lại nội dung
+    positionAgent();
+    buildTable();
+    showStatus();
+  }
+
+  function readParams() {
+    const num = id => { const t = $(id).value.trim(); return t === '' ? NaN : Number(t); };
+    const p = { alpha: num('alpha'), gamma: num('gamma'), epsilon: num('epsilon'), episodes: num('episodes') };
+    for (const name of ['alpha', 'gamma', 'epsilon'])
+      if (!(p[name] >= 0 && p[name] <= 1)) throw new Error(`${name} phải là số từ 0 đến 1.`);
+    if (!Number.isInteger(p.episodes) || p.episodes < 1) throw new Error('Số lượt học phải là số nguyên >= 1.');
+    return p;
+  }
+
+  function startEpisode() {
+    trail.forEach(k => dirty.add(k));
+    trail.clear();
+    stepCount = 0;
+    needReset = false;
+    moveAgent([0, 0]);
+  }
+
+  function moveAgent(p) {
+    if (agentKey !== null) dirty.add(agentKey);
+    agentKey = key(p[0], p[1]);
+    trail.add(agentKey);
+    dirty.add(agentKey);
+    pos = p;
+  }
+
+  // Đúng 1 bước của agent
+  function tick() {
+    if (finished) return;
+    if (needReset) startEpisode();
+    const s = pos;
+    const a = chooseAction(Q[s[0]][s[1]], P.epsilon);
+    const res = envStep(grid, s, a);
+    updateQ(Q, s, a, res.reward, res.pos, res.done, P.alpha, P.gamma);
+    dirty.add(key(s[0], s[1]));
+    lastUpd = { r: s[0], c: s[1], a };
+    // chỉ để hoạt ảnh: đụng tường / vào bẫy / tới phô mai
+    lastEvent = res.done ? 'goal' : res.pos === s ? 'bump' : grid[res.pos[0]][res.pos[1]] === 'T' ? 'trap' : null;
+    moveAgent(res.pos);
+    stepCount++;
+    // hết episode khi tới đích hoặc chạm giới hạn bước (bị cắt thì không coi là terminal)
+    if (res.done || stepCount >= maxSteps) {
+      episode++;
+      needReset = true;
+      if (episode >= total()) { finished = true; stopLearning(); flush(); showBest(); }
+    }
+  }
+
+  function showStatus() {
+    const tot = total();
+    let msg, phase;
+    if (finished) { msg = `Học xong ${tot} lượt!`; phase = 'done'; }
+    else if (running) { msg = `Đang học… lượt ${Math.min(episode + 1, tot)}/${tot}`; phase = 'run'; }
+    else if (episode === 0 && stepCount === 0) { msg = 'Sẵn sàng. Bấm “Bắt đầu học”.'; phase = 'ready'; }
+    else { msg = `Tạm dừng — lượt ${Math.min(episode + 1, tot)}/${tot}`; phase = 'pause'; }
+    $('status').textContent = msg;
+    $('barText').textContent = `Đã học ${episode}/${tot}`;
+    $('fill').style.width = (tot ? Math.min(100, episode / tot * 100) : 0) + '%';
+    $('bar').setAttribute('aria-valuemax', tot);
+    $('bar').setAttribute('aria-valuenow', episode);
+    if (phase !== lastPhase) { lastPhase = phase; $('live').textContent = msg; }   // chỉ đọc khi đổi giai đoạn, không đọc mỗi khung hình
+  }
+
+  const animOn = () => !reduceMotion && Number($('speed').value) < 67;   // tốc độ Nhanh thì tắt hoạt ảnh từng bước
+
+  // Cập nhật giao diện cho những ô vừa đổi (không dựng lại cả bảng)
+  function flush() {
+    dirty.forEach(k => {
+      refreshCell(Math.floor(k / grid[0].length), k % grid[0].length);
+      pendingRows.add(k);
+    });
+    dirty.clear();
+    positionAgent();
+    if (lastEvent && animOn()) {
+      const ico = $('agentIco');
+      ico.className = ''; void ico.offsetWidth; ico.className = 'ev-' + lastEvent;   // chạy lại hoạt ảnh
+    }
+    lastEvent = null;
+    // Bảng Q có tới 400 hàng, vẽ lại cả loạt trong 1 khung sẽ giật: khi đang học chỉ cập nhật tối đa 60 hàng mỗi khung, phần còn lại để khung sau
+    let n = 0;
+    for (const k of pendingRows) {
+      refreshRow(Math.floor(k / grid[0].length), k % grid[0].length);
+      pendingRows.delete(k);
+      if (running && ++n >= 60) break;
+    }
+    const row = pendingRows.size === 0 && lastUpd && rowEls[key(lastUpd.r, lastUpd.c)];
+    if (row) {
+      const td = row.tds[lastUpd.a];
+      td.classList.remove('flash'); void td.offsetWidth; td.classList.add('flash');   // chạy lại hoạt ảnh
+      if (Number($('speed').value) < 70) row.tr.scrollIntoView({ block: 'nearest' });
+    }
+    showStatus();
+  }
+
+  // Tính đường greedy hiện tại, VẼ ĐÈ lên lưới và hiện tổng kết (không dựng lại lưới)
+  function showBest() {
+    const card = (text, cls) => { $('summary').textContent = text; $('summary').className = cls; };
+    if (!hasPath(grid)) { card('Không có đường từ S tới G, hãy sửa mê cung.', 'warn'); $('more').hidden = true; return; }
+    const res = runGreedy(grid, Q);
+    pathIdx = new Map();
+    if (res.reached) res.path.forEach((p, i) => pathIdx.set(key(p[0], p[1]), i));
+    animatePath = res.reached && animOn();
+    refreshAll();
+    animatePath = false;
+    const best = optimalPath(grid);
+    let learned = false;
+    if (res.reached) {
+      learned = res.score === best.score;   // so theo điểm, vì có thể có nhiều đường tối ưu
+      card(`Chuột Q đã tìm ra đường! 🧀\n${res.steps} bước, điểm ${res.score}.\n` +
+           `Đường tốt nhất có thể: ${best.steps} bước, điểm ${best.score}.\n` +
+           (learned ? 'Học đúng ✓' : 'Chưa tối ưu, thử luyện thêm nhé.'), learned ? 'good' : 'warn');
+    } else {
+      card('Chuột Q chưa tìm ra đường. Hãy luyện thêm nhé!', 'warn');
+    }
+    $('more').hidden = learned || running;
+  }
+
+  // ---------- Vòng lặp hoạt ảnh ----------
+  let lastT = 0, acc = 0;
+  function speedInfo() {   // thanh 0..99: 1 → 10000 bước/giây; 100: tối đa (giới hạn bằng thời gian mỗi khung)
+    const v = Number($('speed').value);
+    return v >= 100 ? { max: true } : { max: false, sps: Math.round(10 ** (v / 100 * 4)) };
+  }
+
+  function applyMotion() {   // chỉ hiển thị: bật/tắt hoạt ảnh trượt theo tốc độ
+    document.body.classList.toggle('anim', animOn());
+    const sp = speedInfo();
+    if (!sp.max) document.documentElement.style.setProperty('--glide', Math.max(30, Math.min(180, 900 / sp.sps)) + 'ms');
+  }
+  $('speed').addEventListener('input', applyMotion);
+  applyMotion();
+
+  function frame(t) {
+    if (!running) return;
+    const sp = speedInfo();
+    acc += Math.min(t - lastT, 100) / 1000 * (sp.max ? 0 : sp.sps);
+    lastT = t;
+    const n = sp.max ? Infinity : Math.floor(acc);
+    acc -= sp.max ? 0 : n;
+    const t0 = performance.now();
+    for (let i = 0; i < n && running; i++) {
+      tick();
+      if (i % 64 === 63 && performance.now() - t0 > 8) { acc = 0; break; }   // phần học mỗi khung tối đa ~8ms (còn chừa thời gian vẽ) nên trang không đơ
+    }
+    flush();
+    if (running) rafId = requestAnimationFrame(frame);
+  }
+
+  function setLocked(locked) {   // khi đang chạy: khóa sửa lưới và tham số
+    ['rows', 'cols', 'create', 'alpha', 'gamma', 'epsilon', 'episodes', 'stepBtn'].forEach(id => $(id).disabled = locked);
+    $('run').textContent = locked ? 'Tạm dừng' : 'Bắt đầu học';
+  }
+
+  function stopLearning() {   // MỘT chỗ duy nhất hủy timer của vòng học
+    running = false;
+    cancelAnimationFrame(rafId);
+    setLocked(false);
+  }
+
+  function prepare() {   // kiểm tra lưới, đường đi, tham số; false nếu không chạy được
+    if (!grid) { errorEl.textContent = 'Hãy bấm "Tạo lưới" trước.'; return false; }
+    if (!hasPath(grid)) { errorEl.textContent = 'Không có đường từ S tới G, hãy sửa mê cung.'; return false; }
+    if (finished) { errorEl.textContent = 'Đã học xong. Bấm “Luyện thêm” hoặc “Làm lại”.'; return false; }
+    try { P = readParams(); } catch (err) { errorEl.textContent = err.message; return false; }
+    errorEl.textContent = '';
+    return true;
+  }
+
+  function clearPath() {   // bỏ đường tốt nhất đang vẽ đè và câu tổng kết
+    if (pathIdx.size) { pathIdx = new Map(); refreshAll(); }
+    $('summary').textContent = '';
+    $('summary').className = '';
+    $('more').hidden = true;
+  }
+
+  function startRun() {
+    if (running) return;
+    clearPath();
+    running = true; setLocked(true);
+    lastT = performance.now(); acc = 0;
+    applyMotion();
+    rafId = requestAnimationFrame(frame);
+    showStatus();
+  }
+
+  $('run').addEventListener('click', () => {
+    if (running) { stopLearning(); showStatus(); return; }
+    if (prepare()) startRun();
+  });
+  $('more').addEventListener('click', () => {   // học tiếp với Q hiện có
+    finished = false;
+    if (!prepare()) { finished = true; return; }
+    extra += P.episodes;
+    startRun();
+  });
+  $('stepBtn').addEventListener('click', () => { if (prepare()) { clearPath(); tick(); flush(); } });
+  $('reset').addEventListener('click', () => { if (grid) resetLearning(); });
+  $('best').addEventListener('click', () => {
+    if (!grid) { errorEl.textContent = 'Hãy bấm "Tạo lưới" trước.'; return; }
+    showBest();
+  });
+
+  $('toggleQ').addEventListener('click', () => {
+    qVisible = !qVisible;
+    $('qbox').hidden = !qVisible;
+    $('toggleQ').textContent = qVisible ? 'Ẩn bảng' : 'Hiện bảng';
+    if (grid) buildTable();
+  });
+
+  // ---------- Sửa mê cung (a) ----------
+  const snapshot = () => grid.map(row => row.slice());
+
+  // Hàm DUY NHẤT ghi vào grid theo từng ô. Gán (không toggle): gán lại cùng giá trị thì không làm gì.
+  function setCell(r, c, sym, source) {
+    if (running || isEdge(r, c) || grid[r][c] === sym || !(sym in SYMBOL_CLASS)) return;   // không sửa khi đang chạy, không đè S/G
+    if (sym === '#' || sym === 'T') {   // không cho tường/bẫy chặn kín: phải còn đường S→G không qua tường và bẫy
+      const old = grid[r][c];
+      grid[r][c] = sym;
+      const ok = hasPath(grid, '#T');
+      grid[r][c] = old;
+      if (!ok) { errorEl.textContent = 'Không đặt được ô này: phải chừa ít nhất một đường đi từ 🏠 tới 🧀.'; return; }
+    }
+    if (!(painting && strokeOpen)) {   // mỗi nét vẽ (hoặc mỗi lần thả) lưu 1 bản undo
+      undoStack.push(snapshot());
+      if (undoStack.length > 50) undoStack.shift();
+      strokeOpen = painting;
+    }
+    if (DEBUG) console.log('grid[%d][%d]: %s -> %s (nguồn: %s)', r, c, grid[r][c], sym, source);
+    grid[r][c] = sym;
+    resetLearning(false);   // mê cung đổi thì Q-table và đường cũ không còn đúng
+  }
+
+  function undo() {
+    if (running || !undoStack.length) return;
+    grid = undoStack.pop();
+    if (DEBUG) console.log('undo');
+    resetLearning(false);
+  }
+
+  function cellOf(e) {
+    const el = e.target.closest('.cell');
+    return el ? [Number(el.dataset.row), Number(el.dataset.col)] : null;
+  }
+
+  function parseSize(text, name) {
+    const n = Number(text);
+    if (!Number.isInteger(n) || n < 2 || n > 20) throw new Error(`${name} phải là số nguyên từ 2 đến 20.`);
+    return n;
+  }
+
+  // "Tạo lưới" chỉ chạy khi bấm nút (không có change/blur trên ô nhập)
+  $('create').addEventListener('click', () => {
+    try {
+      const rows = parseSize($('rows').value.trim(), 'Rows');
+      const cols = parseSize($('cols').value.trim(), 'Cols');
+      if (rows * cols < 2) throw new Error('Lưới phải có ít nhất 2 ô.');
+      const hasDrawing = grid && grid.some(row => row.some(s => s === '#' || s === 'T'));
+      if (hasDrawing && !confirm('Lưới hiện có tường/bẫy. Tạo lưới mới sẽ xóa hết. Tiếp tục?')) return;
+      grid = makeGrid(rows, cols);
+      undoStack.length = 0;
+      if (DEBUG) console.log('tạo lưới mới', rows, cols);
+      $('episodes').value = autoEpisodes(rows, cols);
+      resetLearning();
+    } catch (err) {
+      errorEl.textContent = err.message;
+    }
+  });
+
+  document.querySelectorAll('.item').forEach(item => {
+    item.addEventListener('click', () => selectTool(item.dataset.type));
+    item.addEventListener('keydown', e => {   // bàn phím: Enter / Space chọn cọ
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTool(item.dataset.type); }
+    });
+    // kéo từ palette chỉ mang loại ô đi, không đổi cọ đang chọn
+    item.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', item.dataset.type));
+  });
+  document.querySelectorAll('button').forEach(b => { b.draggable = false; });
+  function selectTool(type) {
+    tool = type;
+    document.querySelectorAll('.item').forEach(i => {
+      i.classList.toggle('active', i.dataset.type === type);
+      i.setAttribute('aria-pressed', i.dataset.type === type);
+    });
+  }
+
+  // Kéo-thả HTML5 từ palette: một lần thả = một lần ghi
+  gridEl.addEventListener('dragover', e => e.preventDefault());
+  gridEl.addEventListener('drop', e => {
+    e.preventDefault();
+    const p = cellOf(e);
+    if (p) setCell(p[0], p[1], e.dataTransfer.getData('text/plain'), 'drop');
+  });
+
+  // Tô bằng Pointer Events: chỉ nút trái; cờ painting luôn được thả ở window
+  gridEl.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || running) return;   // chuột phải/giữa không được bật chế độ tô
+    const p = cellOf(e);
+    if (!p) return;
+    e.preventDefault();   // chặn chọn chữ / kéo gốc chen vào lúc tô
+    if (e.target.releasePointerCapture) e.target.releasePointerCapture(e.pointerId);   // cảm ứng: để pointerover vẫn tới các ô khác
+    painting = true;
+    strokeOpen = false;
+    setCell(p[0], p[1], tool, 'pointerdown');
+  });
+  gridEl.addEventListener('pointerover', e => {
+    const p = painting && cellOf(e);
+    if (p) setCell(p[0], p[1], tool, 'pointerover');
+  });
+  const stopPainting = () => { painting = false; strokeOpen = false; };
+  ['pointerup', 'pointercancel', 'blur', 'dragend'].forEach(t => window.addEventListener(t, stopPainting));
+  gridEl.addEventListener('contextmenu', stopPainting);
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(e.target.tagName)) {
+      e.preventDefault();
+      undo();
+    }
+  });
+
+  $('download').addEventListener('click', () => {
+    if (!grid) { errorEl.textContent = 'Hãy bấm "Tạo lưới" trước.'; return; }
+    const text = grid.map(row => row.join('')).join('\n');
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'maze.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+</body>
+</html>

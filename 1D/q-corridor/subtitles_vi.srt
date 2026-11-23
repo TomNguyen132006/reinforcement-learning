@@ -1,0 +1,91 @@
+1
+00:00:03,700 --> 00:00:07,170
+Con AI đứng ở ô 0 của hành lang 5 ô.
+
+2
+00:00:07,280 --> 00:00:10,020
+Đích là ô 4, nhưng nó không biết điều đó.
+
+3
+00:00:10,080 --> 00:00:13,330
+Mỗi bước bị −1. Tới đích được +10 reward.
+
+4
+00:00:13,550 --> 00:00:17,020
+Đi trái ở ô 0: đụng tường, đứng yên.
+
+5
+00:00:18,140 --> 00:00:22,180
+Q-table: mỗi (ô, action) có một điểm. Ban đầu toàn 0.
+
+6
+00:00:22,400 --> 00:00:27,550
+Điểm bằng nhau → greedy chọn left (index đầu tiên): kẹt ở tường.
+
+7
+00:00:29,010 --> 00:00:34,050
+ε = 0.7: 70% bước đi ngẫu nhiên (explore). Huấn luyện 200 episode.
+
+8
+00:00:36,060 --> 00:00:38,420
+Sau mỗi bước, cập nhật Q-table.
+
+9
+00:00:38,640 --> 00:00:41,440
+Ở đích, target chỉ là reward: sau đó không còn gì.
+
+10
+00:00:42,560 --> 00:00:48,940
+Huấn luyện: AI đi ngẫu nhiên với ε = 0.7 (cam), còn lại chọn max Q (xanh).
+
+11
+00:00:49,170 --> 00:00:53,090
+Episode 2 cũng vậy: AI chưa biết đường, chỉ thử rồi học.
+
+12
+00:00:54,660 --> 00:00:56,730
+Lần đầu tới đích:
+
+13
+00:00:56,780 --> 00:01:01,820
+Q[3][right] = 0 + 0.5 × (10 − 0) = 5
+
+14
+00:01:02,050 --> 00:01:05,070
+Sau episode 1, Q-table đã khác.
+
+15
+00:01:05,300 --> 00:01:09,890
+Lần hai: 5 + 0.5 × (10 − 5) = 7.5
+
+16
+00:01:10,110 --> 00:01:13,580
+Mỗi lần tới đích, Q[3][right] lại tiến gần 10.
+
+17
+00:01:15,260 --> 00:01:20,980
+Test (ε = 0, chỉ theo Q) sau episode 1: vẫn kẹt, 50 bước rồi bỏ cuộc.
+
+18
+00:01:21,200 --> 00:01:24,780
+Sau episode 2: AI tự đi 0 → 1 → 2 → 3 → 4, chỉ 4 bước.
+
+19
+00:01:25,010 --> 00:01:30,940
+Các episode sau vẫn 4 bước, còn Q thì cứ tăng dần.
+
+20
+00:01:32,620 --> 00:01:36,660
+Điểm "right" lan ngược từ đích: ô 3 = 10.0.
+
+21
+00:01:36,880 --> 00:01:41,920
+Mỗi ô = ô kế tiếp × 0.9 − 1:  8.0, 6.2, 4.58.
+
+22
+00:01:42,140 --> 00:01:46,290
+Sau 200 episode, AI không đi ngẫu nhiên nữa: chọn action có Q lớn nhất.
+
+23
+00:01:46,510 --> 00:01:52,000
+Nó không hề được chỉ đích ở đâu: chỉ học từ reward.

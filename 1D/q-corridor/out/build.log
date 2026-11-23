@@ -1,0 +1,55 @@
+events 826 dur 112.56000000000002 → C:\Users\minht\OneDrive\Desktop\RL\q-corridor\events.json
+rms music/foley -14.8 -20.9 peak 0.9500000476837158
+w0 0/676  0s
+w2 0/676  0s
+w3 0/673  1s
+w1 0/676  1s
+w0 60/676  4s
+w2 60/676  4s
+w3 60/673  5s
+w1 60/676  5s
+w0 120/676  8s
+w2 120/676  9s
+w3 120/673  9s
+w1 120/676  9s
+w0 180/676  12s
+w2 180/676  13s
+w1 180/676  14s
+w0 240/676  16s
+w2 240/676  18s
+w1 240/676  18s
+w3 180/673  20s
+w0 300/676  21s
+w1 300/676  23s
+w2 300/676  24s
+w0 360/676  25s
+w3 240/673  26s
+w2 360/676  29s
+w3 300/673  30s
+w1 360/676  31s
+w0 420/676  32s
+w3 360/673  34s
+w1 420/676  35s
+w0 480/676  35s
+w2 420/676  37s
+w3 420/673  38s
+w1 480/676  39s
+w0 540/676  39s
+w2 480/676  41s
+w3 480/673  41s
+w1 540/676  42s
+w0 600/676  42s
+w2 540/676  44s
+w3 540/673  45s
+w1 600/676  45s
+w0 660/676  46s
+w2 600/676  48s
+w3 600/673  49s
+w1 660/676  52s
+w2 660/676  52s
+w3 660/673  53s
+done C:\Users\minht\OneDrive\Desktop\RL\q-corridor\out\video.mp4 2701 frames 54s
+/c/Users/minht/OneDrive/Desktop/RL/q-corridor/q-corridor.mp4
+    I:         -13.8 LUFS
+    LRA:         7.4 LU
+    Peak:       -1.5 dBFS

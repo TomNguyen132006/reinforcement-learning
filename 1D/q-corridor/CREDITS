@@ -1,0 +1,7 @@
+Q-learning corridor — third-party assets
+Picture/engine: Whiteboard Explainer engine (engine/wb.js) from the Lemo-Opuscar library, with glyphs ← ε α γ added.
+Fonts (SIL Open Font License 1.1):
+ - EMS Tech single-line handwriting (fonts/EMSTech.json, board text) — from the library's whiteboard demo
+ - Patrick Hand (fonts/PatrickHand-Regular.ttf, burned-in Vietnamese captions) — https://github.com/google/fonts/tree/main/ofl/patrickhand, licence in fonts/OFL-PatrickHand.txt
+Sound: all synthesised in code (mix.py: marker/eraser/magnet foley adapted from the library's whiteboard demo; marimba/pizzicato/glockenspiel synthesised with numpy). No samples, no voice.
+Numbers: real output of the user's 1DGrid.py with random.seed(1) (out/1DGrid_seed1_output.txt, numbers.json). Colours from "Hành lang Q-learning.html".

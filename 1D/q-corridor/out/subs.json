@@ -1,0 +1,117 @@
+[
+ {
+  "t0": 3.7,
+  "t1": 7.17,
+  "text": "Con AI đứng ở ô 0 của hành lang 5 ô."
+ },
+ {
+  "t0": 7.28,
+  "t1": 10.02,
+  "text": "Đích là ô 4, nhưng nó không biết điều đó."
+ },
+ {
+  "t0": 10.08,
+  "t1": 13.33,
+  "text": "Mỗi bước bị −1. Tới đích được +10 reward."
+ },
+ {
+  "t0": 13.55,
+  "t1": 17.02,
+  "text": "Đi trái ở ô 0: đụng tường, đứng yên."
+ },
+ {
+  "t0": 18.14,
+  "t1": 22.18,
+  "text": "Q-table: mỗi (ô, action) có một điểm. Ban đầu toàn 0."
+ },
+ {
+  "t0": 22.4,
+  "t1": 27.55,
+  "text": "Điểm bằng nhau → greedy chọn left (index đầu tiên): kẹt ở tường."
+ },
+ {
+  "t0": 29.01,
+  "t1": 34.05,
+  "text": "ε = 0.7: 70% bước đi ngẫu nhiên (explore). Huấn luyện 200 episode."
+ },
+ {
+  "t0": 36.06,
+  "t1": 38.42,
+  "text": "Sau mỗi bước, cập nhật Q-table."
+ },
+ {
+  "t0": 38.64,
+  "t1": 41.44,
+  "text": "Ở đích, target chỉ là reward: sau đó không còn gì."
+ },
+ {
+  "t0": 42.56,
+  "t1": 48.94,
+  "text": "Huấn luyện: AI đi ngẫu nhiên với ε = 0.7 (cam), còn lại chọn max Q (xanh)."
+ },
+ {
+  "t0": 49.17,
+  "t1": 53.09,
+  "text": "Episode 2 cũng vậy: AI chưa biết đường, chỉ thử rồi học."
+ },
+ {
+  "t0": 54.66,
+  "t1": 56.73,
+  "text": "Lần đầu tới đích:"
+ },
+ {
+  "t0": 56.78,
+  "t1": 61.82,
+  "text": "Q[3][right] = 0 + 0.5 × (10 − 0) = 5"
+ },
+ {
+  "t0": 62.05,
+  "t1": 65.07,
+  "text": "Sau episode 1, Q-table đã khác."
+ },
+ {
+  "t0": 65.3,
+  "t1": 69.89,
+  "text": "Lần hai: 5 + 0.5 × (10 − 5) = 7.5"
+ },
+ {
+  "t0": 70.11,
+  "t1": 73.58,
+  "text": "Mỗi lần tới đích, Q[3][right] lại tiến gần 10."
+ },
+ {
+  "t0": 75.26,
+  "t1": 80.98,
+  "text": "Test (ε = 0, chỉ theo Q) sau episode 1: vẫn kẹt, 50 bước rồi bỏ cuộc."
+ },
+ {
+  "t0": 81.2,
+  "t1": 84.78,
+  "text": "Sau episode 2: AI tự đi 0 → 1 → 2 → 3 → 4, chỉ 4 bước."
+ },
+ {
+  "t0": 85.01,
+  "t1": 90.94,
+  "text": "Các episode sau vẫn 4 bước, còn Q thì cứ tăng dần."
+ },
+ {
+  "t0": 92.62,
+  "t1": 96.66,
+  "text": "Điểm \"right\" lan ngược từ đích: ô 3 = 10.0."
+ },
+ {
+  "t0": 96.88,
+  "t1": 101.92,
+  "text": "Mỗi ô = ô kế tiếp × 0.9 − 1:  8.0, 6.2, 4.58."
+ },
+ {
+  "t0": 102.14,
+  "t1": 106.29,
+  "text": "Sau 200 episode, AI không đi ngẫu nhiên nữa: chọn action có Q lớn nhất."
+ },
+ {
+  "t0": 106.51,
+  "t1": 112.0,
+  "text": "Nó không hề được chỉ đích ở đâu: chỉ học từ reward."
+ }
+]
