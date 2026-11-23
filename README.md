@@ -1,6 +1,5 @@
 # Reinforcement Learning
 
-## Suggested viewing order
 
 ### 2D: grid maze
 | # | What | File |
@@ -15,4 +14,3 @@
   maze-input/            code + HTML game + maze.txt
   q-grid/                2D video (video source + the 2DGrid.py used to render it)
 ```
-More projects will be added to this repo.
