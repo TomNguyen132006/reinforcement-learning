@@ -1,5 +1,6 @@
 # Reinforcement Learning
 
+## ▶️ [PLAY IT ONLINE](https://chuot-q-maze.vercel.app)
 
 ### 2D: grid maze
 | # | What | File |
